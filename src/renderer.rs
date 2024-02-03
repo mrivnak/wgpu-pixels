@@ -64,6 +64,17 @@ pub struct PixelRenderer<'a> {
 }
 
 impl<'a> PixelRenderer<'a> {
+    /// Create a new PixelRenderer
+    ///
+    /// # Arguments
+    ///
+    /// * `window` - A reference to the window to render to
+    /// * `height` - The height of the pixel grid
+    /// * `width` - The width of the pixel grid
+    /// * `pixel_size` - The size of each pixel in pixels
+    /// * `foreground` - The color of the pixels
+    /// * `background` - The color of the background
+    ///
     pub async fn new(
         window: &'a Window,
         height: usize,
@@ -74,8 +85,6 @@ impl<'a> PixelRenderer<'a> {
     ) -> Self {
         let size = window.inner_size();
 
-        // The instance is a handle to our GPU
-        // Backends::all => Vulkan + Metal + DX12 + WebGPU
         let instance = wgpu::Instance::new(InstanceDescriptor {
             backends: wgpu::Backends::all(),
             ..InstanceDescriptor::default()
@@ -96,16 +105,10 @@ impl<'a> PixelRenderer<'a> {
             .request_device(
                 &wgpu::DeviceDescriptor {
                     required_features: wgpu::Features::empty(),
-                    // WebGL doesn't support all of wgpu's features, so if
-                    // we're building for the web we'll have to disable some.
-                    required_limits: if cfg!(target_arch = "wasm32") {
-                        wgpu::Limits::downlevel_webgl2_defaults()
-                    } else {
-                        wgpu::Limits::default()
-                    },
+                    required_limits: wgpu::Limits::default(),
                     label: None,
                 },
-                None, // Trace path
+                None,
             )
             .await
             .unwrap();
@@ -146,11 +149,9 @@ impl<'a> PixelRenderer<'a> {
                 buffers: &[Vertex::desc()],
             },
             fragment: Some(wgpu::FragmentState {
-                // 3.
                 module: &shader,
                 entry_point: "fs_main",
                 targets: &[Some(wgpu::ColorTargetState {
-                    // 4.
                     format: config.format,
                     blend: Some(wgpu::BlendState::REPLACE),
                     write_mask: wgpu::ColorWrites::ALL,
@@ -161,11 +162,8 @@ impl<'a> PixelRenderer<'a> {
                 strip_index_format: None,
                 front_face: wgpu::FrontFace::Ccw,
                 cull_mode: Some(wgpu::Face::Back),
-                // Setting this to anything other than Fill requires Features::NON_FILL_POLYGON_MODE
                 polygon_mode: wgpu::PolygonMode::Fill,
-                // Requires Features::DEPTH_CLIP_CONTROL
                 unclipped_depth: false,
-                // Requires Features::CONSERVATIVE_RASTERIZATION
                 conservative: false,
             },
             depth_stencil: None,
@@ -194,6 +192,7 @@ impl<'a> PixelRenderer<'a> {
         }
     }
 
+    /// Resize the renderer when the window is resized
     pub fn resize(&mut self, new_size: PhysicalSize<u32>) {
         if new_size.width > 0 && new_size.height > 0 {
             // Constrains resizing to the aspect ratio of the pixel grid
@@ -212,6 +211,7 @@ impl<'a> PixelRenderer<'a> {
         debug_assert!(self.usable_size.height <= self.size.height);
     }
 
+    /// Render the pixels to the window
     pub fn render(&mut self, pixels: &[Pixel]) -> Result<(), wgpu::SurfaceError> {
         debug_assert_eq!(pixels.len(), self.pixel_grid_size.size());
 
@@ -279,7 +279,6 @@ impl<'a> PixelRenderer<'a> {
             render_pass.draw_indexed(0..pixel_indices.len() as u32, 0, 0..1);
         }
 
-        // submit will accept anything that implements IntoIter
         self.queue.submit(std::iter::once(encoder.finish()));
         output.present();
 

@@ -1,9 +1,9 @@
-name: Cargo Check
+name: Build
 
 on: push
 
 jobs:
-  cargo-check:
+  cargo-build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

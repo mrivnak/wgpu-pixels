@@ -7,3 +7,5 @@
 ![wgpu](https://img.shields.io/badge/wgpu-%23FFFFFF.svg?style=for-the-badge&logo=rust&logoColor=black)
 
 Pixel renderer built on top of wgpu
+
+![screenshot](example.png)

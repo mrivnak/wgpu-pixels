@@ -1,5 +1,5 @@
 #[derive(Debug)]
-#[cfg_attr(debug_assertions, derive(PartialEq))]
+#[cfg_attr(test, derive(PartialEq))]
 pub(crate) struct Point<T> {
     pub x: T,
     pub y: T,
